@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To do list app</title>
+    <style>
+      body {
+        height: 100vh;
+        background-color: rgb(7, 7, 48);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        max-height: 400px;
+      }
+
+      h1 {
+        font-family: "Pacifico", cursive;
+      }
+
+      .list {
+        max-height: 250px;
+        overflow: auto;
+      }
+
+      .search button {
+        background-color: rgb(248, 95, 40);
+      }
+
+      .newList {
+        margin: 10px auto;
+        width: 95%;
+        background-color: white;
+        padding: 5px;
+        position: relative;
+      }
+
+      .newList i {
+        position: absolute;
+        right: 5px;
+        cursor: pointer;
+      }
+
+      i:hover {
+        color: red;
+      }
+
+      .task-label {
+        margin-left: 10px;
+      }
+
+      .task-label.completed {
+        text-decoration: line-through;
+      }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="row text-center">
+        <div class="col col-md-6 mx-auto border p-3 rounded bg-light">
+          <section id="section-a" class="">
+            <h1>To Do list</h1>
+            <p>Make it well-organized!!</p>
+
+            <div class="input-group mb-3 search">
+              <input type="text" id="taskInput" class="form-control" placeholder="add your activities here.." aria-label="Recipient's username" aria-describedby="button-addon2" />
+              <button class="btn btn-outline-secondary text-white addTaskButton" type="button" id="button-addon2">add</button>
+            </div>
+            <div class="list text-start"></div>
+          </section>
+          <section id="section-b" class="d-none">
+            <h2>History activities</h2>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Memuat daftar tugas saat halaman dimuat
+      document.addEventListener("DOMContentLoaded", loadTaskList);
+
+      // Mengambil referensi elemen-elemen yang diperlukan
+      const addTaskButton = document.getElementById("button-addon2");
+      const taskInput = document.getElementById("taskInput");
+      const taskList = document.querySelector(".list");
+
+      // Event listener untuk tombol "addTaskButton"
+      addTaskButton.addEventListener("click", addTask);
+
+      // Event listener untuk tombol enter pada input "taskInput"
+      taskInput.addEventListener("keypress", (event) => {
+        if (event.keyCode === 13) {
+          addTask();
+        }
+      });
+
+      taskList.addEventListener("click", function (e) {
+        if (e.target.classList.contains("bi-trash")) {
+          e.target.parentElement.parentElement.remove();
+          saveTaskList(); // Menyimpan daftar tugas setelah menghapus tugas
+        } else if (e.target.tagName === "INPUT" && e.target.type === "checkbox") {
+          const taskLabel = e.target.nextElementSibling;
+          if (e.target.checked) {
+            taskLabel.classList.add("completed"); // Tambahkan kelas "completed" ke label tugas
+          } else {
+            taskLabel.classList.remove("completed"); // Hapus kelas "completed" dari label tugas
+          }
+          saveTaskList(); // Menyimpan daftar tugas setelah memperbarui status checkbox
+        }
+      });
+
+      // Memuat daftar tugas dari Local Storage saat halaman dimuat
+      function loadTaskList() {
+        const storedTasks = localStorage.getItem("tasks");
+        if (storedTasks) {
+          const tasks = JSON.parse(storedTasks);
+          tasks.forEach((task) => {
+            const newTask = createTaskElement(task);
+            taskList.appendChild(newTask);
+          });
+        }
+      }
+
+      // Menambahkan tugas baru
+      function addTask() {
+        const taskText = taskInput.value.trim();
+        if (taskText !== "") {
+          const newTask = createTaskElement(taskText);
+          taskList.appendChild(newTask);
+          saveTaskList();
+          taskInput.value = "";
+        }
+      }
+
+      // Membuat elemen tugas
+      function createTaskElement(taskText) {
+        const newTask = document.createElement("div");
+        newTask.classList.add("newList", "rounded");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+
+        const taskLabel = document.createElement("label");
+        taskLabel.classList.add("task-label");
+        taskLabel.textContent = taskText;
+
+        const closeButton = document.createElement("i");
+        closeButton.classList.add("bi", "bi-trash");
+        closeButton.style.cursor = "pointer";
+
+        taskLabel.appendChild(closeButton);
+        newTask.appendChild(checkbox);
+        newTask.appendChild(taskLabel);
+
+        closeButton.addEventListener("click", function () {
+          newTask.remove();
+          saveTaskList();
+        });
+
+        return newTask;
+      }
+
+      // Menyimpan daftar tugas ke Local Storage
+      function saveTaskList() {
+        const tasks = Array.from(taskList.querySelectorAll(".task-label")).map((taskLabel) => taskLabel.textContent);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+      }
+
+      // Memuat status checkbox yang disimpan pada Local Storage
+      function loadCheckboxStatus() {
+        const storedCheckboxStatus = localStorage.getItem("checkboxStatus");
+        if (storedCheckboxStatus) {
+          const checkboxStatus = JSON.parse(storedCheckboxStatus);
+          checkboxStatus.forEach((status, index) => {
+            const taskLabels = taskList.querySelectorAll(".task-label");
+            if (status) {
+              taskLabels[index].classList.add("completed"); // Tambahkan kelas "completed" ke label tugas
+              taskLabels[index].previousElementSibling.checked = true; // Perbarui status checkbox
+            }
+          });
+        }
+      }
+
+      // Menyimpan status checkbox ke Local Storage
+      function saveCheckboxStatus() {
+        const taskLabels = taskList.querySelectorAll(".task-label");
+        const checkboxStatus = Array.from(taskLabels).map((taskLabel) => taskLabel.classList.contains("completed"));
+        localStorage.setItem("checkboxStatus", JSON.stringify(checkboxStatus));
+      }
+
+      // Panggil fungsi loadCheckboxStatus saat halaman dimuat
+      document.addEventListener("DOMContentLoaded", loadCheckboxStatus);
+
+      // Panggil fungsi saveCheckboxStatus saat tugas ditandai sebagai selesai atau belum selesai
+      taskList.addEventListener("click", saveCheckboxStatus);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+  </body>
+</html>
